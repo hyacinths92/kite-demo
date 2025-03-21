@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>风筝飞行原理展示</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom, #87CEEB, #1E90FF);
+      height: 100vh;
+    }
+    
+    .sky {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+    
+    .ground {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 15%;
+      background: linear-gradient(to bottom, #8B4513, #A0522D);
+    }
+    
+    .grass {
+      position: absolute;
+      bottom: 15%;
+      width: 100%;
+      height: 5%;
+      background-color: #228B22;
+    }
+    
+    .kite {
+      position: absolute;
+      width: 120px;
+      height: 120px;
+      transform-origin: center center;
+      z-index: 10;
+      cursor: grab; /* 添加抓取光标 */
+      pointer-events: auto; /* 允许鼠标事件 */
+    }
+    
+    .kite.dragging {
+      cursor: grabbing;
+    }
+    
+    .kite img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transform-origin: center center;
+      transition: transform 0.1s ease-out; /* 添加平滑过渡效果 */
+    }
+    
+    .kite-body {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+    
+    .kite-top {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 0;
+      height: 0;
+      border-left: 40px solid transparent;
+      border-right: 40px solid transparent;
+      border-bottom: 40px solid #FF4500;
+    }
+    
+    .kite-bottom {
+      position: absolute;
+      top: 40px;
+      left: 0;
+      width: 0;
+      height: 0;
+      border-left: 40px solid transparent;
+      border-right: 40px solid transparent;
+      border-top: 80px solid #FFD700;
+    }
+    
+    .kite-cross-h {
+      position: absolute;
+      width: 100%;
+      height: 2px;
+      background-color: white;
+      top: 50%;
+      transform: translateY(-50%);
+    }
+    
+    .kite-cross-v {
+      position: absolute;
+      height: 80px; /* 从红色三角形底部到黄色三角形底部的高度 */
+      width: 2px;
+      background-color: white;
+      left: 50%;
+      top: 40px; /* 从红色三角形底部开始 */
+      transform: translateX(-50%);
+    }
+    
+    .kite-diagonal-1 {
+      display: none; /* 隐藏对角线1 */
+    }
+    
+    .kite-diagonal-2 {
+      display: none; /* 隐藏对角线2 */
+    }
+    
+    .kite-tail {
+      position: absolute;
+      width: 2px;
+      height: 120px;
+      background-color: white;
+      transform-origin: top center;
+      z-index: 5;
+      /* 默认垂直向下 */
+      transform: rotate(180deg);
+    }
+    
+    .kite-string {
+      position: absolute;
+      height: 2px;
+      background-color: white;
+      transform-origin: 0% 0%;
+    }
+    
+    .kid {
+      position: absolute;
+      bottom: 15%;
+      left: 70%;
+      width: 50px;
+      height: 100px;
+    }
+    
+    .kid-head {
+      position: absolute;
+      top: 0;
+      left: 10px;
+      width: 30px;
+      height: 30px;
+      background-color: #FFE4C4;
+      border-radius: 50%;
+    }
+    
+    .kid-body {
+      position: absolute;
+      top: 30px;
+      width: 50px;
+      height: 50px;
+      background-color: #FF6347;
+      border-radius: 10px;
+    }
+    
+    .kid-legs {
+      position: absolute;
+      top: 80px;
+      left: 10px;
+      width: 10px;
+      height: 20px;
+      background-color: #1E90FF;
+    }
+    
+    .kid-legs:nth-child(2) {
+      left: 30px;
+    }
+    
+    .kid-arm {
+      position: absolute;
+      top: 40px;
+      left: 0;
+      width: 20px;
+      height: 5px;
+      background-color: #FFE4C4;
+      transform-origin: left;
+      transform: rotate(-30deg);
+    }
+    
+    .wind-control {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: rgba(255, 255, 255, 0.7);
+      padding: 10px;
+      border-radius: 10px;
+      z-index: 100;
+    }
+    
+    .wind-slider, .string-slider {
+      width: 150px;
+      height: 10px;
+      margin-bottom: 10px;
+    }
+    
+    .control-label {
+      margin-top: 10px;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #333;
+    }
+    
+    .wind-button {
+      padding: 10px 20px;
+      background-color: #4169E1;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+    
+    .wind-button:hover {
+      background-color: #1E90FF;
+    }
+    
+    .explanation {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background-color: rgba(255, 255, 255, 0.7);
+      padding: 15px;
+      border-radius: 10px;
+      max-width: 300px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    
+    .wind-arrow {
+      position: absolute;
+      width: 0;
+      height: 0;
+      border-top: 10px solid transparent;
+      border-bottom: 10px solid transparent;
+      border-right: 20px solid rgba(255, 255, 255, 0.5);
+      opacity: 0;
+    }
+    
+    .cloud {
+      position: absolute;
+      background-color: rgba(255, 255, 255, 0.8);
+      border-radius: 50%;
+      filter: blur(10px);
+    }
+    
+    .force-vector {
+      position: absolute;
+      height: 4px;
+      transform-origin: left center;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+      z-index: 20;
+    }
+    
+    .force-vector::after {
+      content: '';
+      position: absolute;
+      right: -8px;
+      top: -6px;
+      border-left: 10px solid;
+      border-top: 7px solid transparent;
+      border-bottom: 7px solid transparent;
+      z-index: 20;
+    }
+    
+    .force-vector.gravity {
+      background-color: #FF0000;
+      z-index: 20;
+    }
+    
+    .force-vector.gravity::after {
+      border-left-color: #FF0000;
+    }
+    
+    .force-vector.lift {
+      background-color: #00FF00;
+      z-index: 20;
+    }
+    
+    .force-vector.lift::after {
+      border-left-color: #00FF00;
+    }
+    
+    .force-vector.tension {
+      background-color: #0000FF;
+      z-index: 20;
+    }
+    
+    .force-vector.tension::after {
+      border-left-color: #0000FF;
+    }
+    
+    .force-label {
+      position: absolute;
+      font-size: 14px;
+      color: white;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s;
+      white-space: nowrap;
+      z-index: 20;
+    }
+    
+    .drag-mode-info {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      font-size: 16px;
+      display: none;
+      z-index: 1000;
+    }
+    
+    .force-analysis-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      padding: 10px 20px;
+      background-color: #4169E1;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      z-index: 100;
+    }
+    
+    .force-analysis-btn:hover {
+      background-color: #1E90FF;
+    }
+  </style>
+</head>
+<body>
+  <div class="sky" id="sky">
+    <div class="explanation">
+      <h3>风筝飞行原理</h3>
+      <p>1. 重力：没有外力时，风筝会一直下落</p>
+      <p>2. 风力：水平的风吹向倾斜的风筝，产生向上的升力</p>
+      <p>3. 牵引力：小朋友拉住风筝线，保持风筝的平衡</p>
+      <p>调整风力大小和绳子长度，观察风筝的飞行情况！</p>
+    </div>
+    
+    <div class="wind-control">
+      <div class="control-label">风力大小</div>
+      <input type="range" min="0" max="100" value="50" class="wind-slider" id="windSlider">
+      <button class="wind-button" id="windButton">调整风力</button>
+      
+      <div class="control-label">绳子长度</div>
+      <input type="range" min="20" max="300" value="40" class="string-slider" id="stringSlider">
+      <button class="wind-button" id="stringButton">调整长度</button>
+    </div>
+    
+    <div class="kid" id="kid">
+      <div class="kid-head"></div>
+      <div class="kid-body"></div>
+      <div class="kid-legs"></div>
+      <div class="kid-legs"></div>
+      <div class="kid-arm" id="kidArm"></div>
+    </div>
+    
+    <div class="kite" id="kite">
+      <img src="./assets/kite1.png" alt="风筝" style="width: 100%; height: 100%; object-fit: contain; transform-origin: center center;">
+    </div>
+    
+    <div class="kite-string" id="kiteString"></div>
+    
+    <!-- 力的向量显示 -->
+    <div class="force-vectors" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20;">
+      <div class="force-vector gravity" id="gravityVector" style="z-index: 20;"></div>
+      <div class="force-vector lift" id="liftVector" style="z-index: 20;"></div>
+      <div class="force-vector tension" id="tensionVector" style="z-index: 20;"></div>
+      <div class="force-label" id="gravityLabel" style="z-index: 20;">重力</div>
+      <div class="force-label" id="liftLabel" style="z-index: 20;">升力</div>
+      <div class="force-label" id="tensionLabel" style="z-index: 20;">拉力</div>
+    </div>
+    
+    <div class="grass"></div>
+    <div class="ground"></div>
+    
+    <button class="force-analysis-btn" id="forceAnalysisBtn">显示受力分析</button>
+  </div>
+
+  <script>
+    // 常量定义
+    const GRAVITY = 0.2;           // 基础重力加速度
+    const WIND_BASE = 0.15;        // 基础风力
+    const DRAG = 0.98;             // 空气阻力
+    const STRING_TENSION = 0.1;    // 风筝线拉力
+    const WIND_THRESHOLD = 8;      // 风力阈值
+    const CLOUD_COUNT = 5;         // 云朵数量
+    const WIND_ARROW_COUNT = 10;   // 风向箭头数量
+    const KITE_BASE_ANGLE = 45;    // 风筝基础倾斜角度
+    const KITE_MAX_ANGLE = 85;     // 风筝最大倾斜角度
+    const GROUND_HEIGHT = 0.20;    // 地面高度占屏幕比例
+    const BOUNCE_DAMPING = 0.5;    // 落地反弹阻尼系数
+    const BASE_STRING_LENGTH = 800; // 增加基础风筝线长度（从500增加到800）
+    const STRING_CONSTRAINT = 1.0; // 绳子约束力强度
+    const GRAVITY_SCALE = 0.3;     // 降低重力随绳子长度的缩放因子（从0.5降到0.3）
+    const INITIAL_WIND_POWER = 35;  // 初始风力为50（最大值的50%）
+    const INITIAL_STRING_LENGTH = 100; // 初始绳子长度为300（最大值）
+    
+    // 获取DOM元素
+    const sky = document.getElementById('sky');
+    const kite = document.getElementById('kite');
+    const kiteString = document.getElementById('kiteString');
+    const kid = document.getElementById('kid');
+    const kidArm = document.getElementById('kidArm');
+    const windSlider = document.getElementById('windSlider');
+    const windButton = document.getElementById('windButton');
+    const stringSlider = document.getElementById('stringSlider');
+    const stringButton = document.getElementById('stringButton');
+    const forceAnalysisBtn = document.getElementById('forceAnalysisBtn');
+    
+    // 力的向量显示元素
+    const gravityVector = document.getElementById('gravityVector');
+    const liftVector = document.getElementById('liftVector');
+    const tensionVector = document.getElementById('tensionVector');
+    const gravityLabel = document.getElementById('gravityLabel');
+    const liftLabel = document.getElementById('liftLabel');
+    const tensionLabel = document.getElementById('tensionLabel');
+    
+    // 创建云朵
+    for (let i = 0; i < CLOUD_COUNT; i++) {
+      createCloud();
+    }
+    
+    // 创建风向箭头
+    for (let i = 0; i < WIND_ARROW_COUNT; i++) {
+      createWindArrow();
+    }
+    
+    // 风筝状态 - 调整初始位置
+    let kitePos = { x: window.innerWidth * 0.3, y: window.innerHeight / 3 };
+    let kiteVel = { x: 0, y: 0 };
+    let windPower = parseInt(windSlider.value);
+    let kidPos = { x: window.innerWidth - 250, y: window.innerHeight * 0.85 - 100 };
+    let isGrounded = false;        // 风筝是否落地
+    let initialStringLength = 0;   // 初始绳子长度
+    let stringLengthFactor = 1.0;  // 绳子长度因子
+    
+    // 添加拖动状态变量
+    let isDragging = false;
+    let dragOffset = { x: 0, y: 0 };
+    let simulationPaused = false;
+    
+    // 添加拖动模式提示
+    const dragModeInfo = document.createElement('div');
+    dragModeInfo.className = 'drag-mode-info';
+    dragModeInfo.id = 'dragModeInfo';
+    dragModeInfo.innerHTML = '拖动模式：风筝位置由你控制';
+    sky.appendChild(dragModeInfo);
+    
+    // 开始拖动
+    function startDrag(e) {
+      isDragging = true;
+      simulationPaused = true;
+      kite.classList.add('dragging');
+      dragModeInfo.style.display = 'block';
+      
+      // 计算鼠标点击位置与风筝中心的偏移
+      const rect = kite.getBoundingClientRect();
+      dragOffset = {
+        x: e.clientX - (rect.left + rect.width / 2),
+        y: e.clientY - (rect.top + rect.height / 2)
+      };
+    }
+    
+    // 拖动中
+    function moveDrag(e) {
+      if (!isDragging) return;
+      
+      // 更新风筝位置
+      kitePos.x = e.clientX - dragOffset.x;
+      kitePos.y = e.clientY - dragOffset.y;
+      
+      // 边界检查
+      const groundY = window.innerHeight * (1 - GROUND_HEIGHT);
+      if (kitePos.y + 60 > groundY) {
+        kitePos.y = groundY - 60;
+        isGrounded = true;
+      } else {
+        isGrounded = false;
+      }
+      
+      // 左右边界检查
+      if (kitePos.x < 40) {
+        kitePos.x = 40;
+      } else if (kitePos.x > window.innerWidth - 40) {
+        kitePos.x = window.innerWidth - 40;
+      }
+      
+      // 上边界检查
+      if (kitePos.y < 60) {
+        kitePos.y = 60;
+      }
+      
+      // 更新风筝位置和绳子
+      kite.style.left = `${kitePos.x - 60}px`;
+      kite.style.top = `${kitePos.y - 60}px`;
+      updateString();
+    }
+    
+    // 结束拖动
+    function endDrag() {
+      if (!isDragging) return;
+      
+      isDragging = false;
+      simulationPaused = false;
+      kite.classList.remove('dragging');
+      dragModeInfo.style.display = 'none';
+      
+      // 重置速度
+      kiteVel = { x: 0, y: 0 };
+    }
+    
+    // 添加事件监听器
+    kite.addEventListener('mousedown', startDrag);
+    document.addEventListener('mousemove', moveDrag);
+    document.addEventListener('mouseup', endDrag);
+    
+    // 更新风力值
+    windSlider.addEventListener('input', (e) => {
+      windPower = parseInt(e.target.value);
+      updateWindArrows();
+    });
+    
+    // 调整风力按钮
+    windButton.addEventListener('click', () => {
+      windPower = parseInt(windSlider.value);
+      updateWindArrows();
+    });
+    
+    // 更新绳子长度
+    stringSlider.addEventListener('input', (e) => {
+      stringLengthFactor = parseInt(e.target.value) / 100;
+    });
+    
+    // 调整绳子长度按钮
+    stringButton.addEventListener('click', () => {
+      stringLengthFactor = parseInt(stringSlider.value) / 100;
+      // 重置风筝速度以避免突然的变化
+      kiteVel = { x: 0, y: 0 };
+    });
+    
+    // 创建云朵函数
+    function createCloud() {
+      const cloud = document.createElement('div');
+      cloud.className = 'cloud';
+      
+      const size = Math.random() * 100 + 50;
+      const x = Math.random() * window.innerWidth;
+      const y = Math.random() * window.innerHeight * 0.5;
+      const speed = Math.random() * 0.3 + 0.1;
+      
+      cloud.style.width = `${size}px`;
+      cloud.style.height = `${size * 0.6}px`;
+      cloud.style.left = `${x}px`;
+      cloud.style.top = `${y}px`;
+      cloud.dataset.speed = speed;
+      
+      sky.appendChild(cloud);
+    }
+    
+    // 创建风向箭头函数
+    function createWindArrow() {
+      const arrow = document.createElement('div');
+      arrow.className = 'wind-arrow';
+      
+      const x = Math.random() * window.innerWidth;
+      const y = Math.random() * window.innerHeight * 0.7;
+      
+      arrow.style.left = `${x}px`;
+      arrow.style.top = `${y}px`;
+      
+      sky.appendChild(arrow);
+    }
+    
+    // 更新风向箭头
+    function updateWindArrows() {
+      const arrows = document.querySelectorAll('.wind-arrow');
+      const opacity = windPower / 50;
+      
+      arrows.forEach(arrow => {
+        arrow.style.opacity = opacity;
+      });
+    }
+    
+    // 移动云朵
+    function moveClouds() {
+      const clouds = document.querySelectorAll('.cloud');
+      
+      clouds.forEach(cloud => {
+        const speed = parseFloat(cloud.dataset.speed) * (windPower / 50);
+        let x = parseFloat(cloud.style.left);
+        x -= speed;
+        
+        if (x < -parseInt(cloud.style.width)) {
+          x = window.innerWidth;
+        }
+        
+        cloud.style.left = `${x}px`;
+      });
+    }
+    
+    // 更新风筝位置和角度
+    function updateKite() {
+      if (!simulationPaused) {
+        // 计算受力
+        calculateForces();
+        
+        // 更新位置
+        kitePos.x += kiteVel.x;
+        kitePos.y += kiteVel.y;
+        
+        // 检查边界 - 地面碰撞
+        const groundY = window.innerHeight * (1 - GROUND_HEIGHT);
+        if (kitePos.y + 60 > groundY) {
+          kitePos.y = groundY - 60;
+          
+          if (kiteVel.y > 0) {
+            kiteVel.y = -kiteVel.y * BOUNCE_DAMPING;
+            
+            if (Math.abs(kiteVel.y) < 0.1) {
+              kiteVel.y = 0;
+              isGrounded = true;
+            }
+          }
+          
+          kiteVel.x *= 0.9;
+        } else {
+          isGrounded = false;
+        }
+        
+        // 左右边界检查
+        if (kitePos.x < 40) {
+          kitePos.x = 40;
+          kiteVel.x = Math.abs(kiteVel.x) * 0.5;
+        } else if (kitePos.x > window.innerWidth - 40) {
+          kitePos.x = window.innerWidth - 40;
+          kiteVel.x = -Math.abs(kiteVel.x) * 0.5;
+        }
+        
+        // 上边界检查
+        if (kitePos.y < 60) {
+          kitePos.y = 60;
+          kiteVel.y = 0;
+        }
+      }
+      
+      // 更新风筝位置和旋转
+      kite.style.left = `${kitePos.x - 60}px`;
+      kite.style.top = `${kitePos.y - 60}px`;
+      
+      // 风筝角度
+      const windFactor = Math.min(1, windPower / 80);
+      const kiteAngle = KITE_BASE_ANGLE + (KITE_MAX_ANGLE - KITE_BASE_ANGLE) * windFactor;
+      kite.querySelector('img').style.transform = `rotate(${kiteAngle}deg)`;
+      
+      // 更新风筝线
+      updateString();
+    }
+    
+    // 更新风筝线
+    function updateString() {
+      // 风筝线起点 (小朋友手部)
+      const stringStartX = kidPos.x;
+      const stringStartY = kidPos.y + 40;
+      
+      // 风筝线终点 (风筝中心)
+      const stringEndX = kitePos.x;
+      const stringEndY = kitePos.y;
+      
+      // 计算当前长度和角度
+      const dx = stringEndX - stringStartX;
+      const dy = stringEndY - stringStartY;
+      const currentLength = Math.sqrt(dx * dx + dy * dy);
+      const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+      
+      // 计算当前允许的最大绳子长度
+      const maxStringLength = initialStringLength * stringLengthFactor;
+      
+      // 判断绳子是否有张力 - 只在有风力时产生张力
+      const hasTension = currentLength >= maxStringLength && windPower > 0;
+      
+      // 更新风筝线位置和旋转
+      kiteString.style.left = `${stringStartX}px`;
+      kiteString.style.top = `${stringStartY}px`;
+      kiteString.style.width = `${currentLength}px`;
+      
+      // 根据绳子状态调整视觉效果
+      if (!hasTension || isGrounded || windPower === 0) {
+        // 无张力状态：绳子松弛，呈现弧形
+        const sagFactor = isGrounded ? 0.1 : (windPower === 0 ? 0.15 : 0.05); // 无风力时绳子更松弛
+        
+        // 使用变换模拟松弛的绳子
+        kiteString.style.height = '2px';
+        kiteString.style.borderRadius = '50%';
+        kiteString.style.transform = `rotate(${angle}deg) scaleY(${1 + sagFactor})`;
+        kiteString.style.opacity = '0.8';
+      } else {
+        // 有张力状态：绳子绷紧，呈现直线
+        kiteString.style.height = '2px';
+        kiteString.style.borderRadius = '0';
+        kiteString.style.transform = `rotate(${angle}deg)`;
+        kiteString.style.opacity = '1';
+      }
+      
+      // 更新小朋友手臂角度
+      kidArm.style.transform = `rotate(${angle + 30}deg)`;
+    }
+    
+    // 计算风筝受力
+    function calculateForces() {
+      // 根据绳子长度计算实际重力
+      const effectiveGravity = GRAVITY * (1 + (stringLengthFactor - 1) * GRAVITY_SCALE);
+      
+      // 应用重力
+      kiteVel.y += effectiveGravity;
+      
+      // 风力 (从右向左吹) - 只在有风力时产生
+      if (windPower > 0) {
+        // 计算风力大小 - 增加风力影响
+        const windForce = WIND_BASE * (windPower / 25) * 0.8; // 从0.5增加到0.8
+        
+        // 计算当前风筝角度
+        const windFactor = Math.min(1, windPower / 80);
+        const kiteAngle = KITE_BASE_ANGLE + (KITE_MAX_ANGLE - KITE_BASE_ANGLE) * windFactor;
+        
+        // 计算升力和水平推力 - 增加升力
+        const liftForce = windForce * Math.sin(kiteAngle * Math.PI / 180) * 2.0; // 从1.5增加到2.0
+        const horizontalForce = windForce * Math.cos(kiteAngle * Math.PI / 180) * 1.2; // 从1.0增加到1.2
+        
+        // 应用风力
+        kiteVel.y -= liftForce;
+        kiteVel.x -= horizontalForce;
+      }
+      
+      // 计算风筝到小朋友的向量
+      const stringVector = {
+        x: kidPos.x - kitePos.x,
+        y: kidPos.y + 40 - kitePos.y
+      };
+      
+      // 计算当前距离
+      const currentDistance = Math.sqrt(stringVector.x * stringVector.x + stringVector.y * stringVector.y);
+      
+      // 标准化向量
+      stringVector.x /= currentDistance;
+      stringVector.y /= currentDistance;
+      
+      // 计算当前允许的最大绳子长度
+      const maxStringLength = initialStringLength * stringLengthFactor;
+      
+      // 绳子约束力
+      if (currentDistance > maxStringLength) {
+        // 计算风筝应该在的位置
+        const newPosX = kidPos.x - stringVector.x * maxStringLength;
+        const newPosY = (kidPos.y + 40) - stringVector.y * maxStringLength;
+        
+        // 调整风筝位置
+        kitePos.x = newPosX;
+        kitePos.y = newPosY;
+        
+        // 调整速度方向
+        const velDotString = kiteVel.x * stringVector.x + kiteVel.y * stringVector.y;
+        if (velDotString < 0) {
+          kiteVel.x -= velDotString * stringVector.x;
+          kiteVel.y -= velDotString * stringVector.y;
+        }
+      }
+      
+      // 空气阻力
+      kiteVel.x *= DRAG;
+      kiteVel.y *= DRAG;
+    }
+    
+    // 更新力的向量显示
+    function updateForceVectors() {
+      if (!showForceAnalysis) {
+        // 隐藏所有力矢量和标签
+        gravityVector.style.opacity = '0';
+        liftVector.style.opacity = '0';
+        tensionVector.style.opacity = '0';
+        gravityLabel.style.opacity = '0';
+        liftLabel.style.opacity = '0';
+        tensionLabel.style.opacity = '0';
+        return;
+      }
+      
+      const baseScale = 50; // 基础力矢量的缩放因子
+      
+      // 计算实际重力大小（随绳子长度变化）
+      const effectiveGravity = GRAVITY * (1 + (stringLengthFactor - 1) * GRAVITY_SCALE);
+      const gravityScale = baseScale * (effectiveGravity / GRAVITY); // 根据实际重力调整长度
+      
+      // 重力向量（向下）- 长度随绳子长度变化
+      gravityVector.style.left = `${kitePos.x}px`;
+      gravityVector.style.top = `${kitePos.y}px`;
+      gravityVector.style.width = `${gravityScale}px`;
+      gravityVector.style.transform = `rotate(90deg)`;
+      gravityVector.style.opacity = '1';
+      
+      // 重力标签 - 显示实际重力大小
+      const gravityPercentage = Math.round((effectiveGravity / GRAVITY - 1) * 100);
+      gravityLabel.style.left = `${kitePos.x + 10}px`;
+      gravityLabel.style.top = `${kitePos.y + gravityScale/2}px`;
+      gravityLabel.style.opacity = '1';
+      gravityLabel.innerHTML = `重力${gravityPercentage > 0 ? `(+${gravityPercentage}%)` : ''}`;
+      
+      // 只有在有风力时显示升力
+      if (windPower > 0) {
+        // 计算升力角度（与风筝角度相关）
+        const windFactor = Math.min(1, windPower / 80);
+        const kiteAngle = KITE_BASE_ANGLE + (KITE_MAX_ANGLE - KITE_BASE_ANGLE) * windFactor;
+        const liftAngle = -kiteAngle - 45; // 升力方向
+        
+        // 升力向量（向左上）
+        liftVector.style.left = `${kitePos.x}px`;
+        liftVector.style.top = `${kitePos.y}px`;
+        liftVector.style.width = `${baseScale * windPower/50}px`;
+        liftVector.style.transform = `rotate(${liftAngle}deg)`;
+        liftVector.style.opacity = '1';
+        
+        // 升力标签
+        const labelDist = baseScale * windPower/50 * 0.7;
+        liftLabel.style.left = `${kitePos.x - labelDist * Math.cos(liftAngle * Math.PI / 180)}px`;
+        liftLabel.style.top = `${kitePos.y - labelDist * Math.sin(liftAngle * Math.PI / 180)}px`;
+        liftLabel.style.opacity = '1';
+      } else {
+        liftVector.style.opacity = '0';
+        liftLabel.style.opacity = '0';
+      }
+      
+      // 计算拉力方向（从风筝指向小朋友）
+      const dx = kidPos.x - kitePos.x;
+      const dy = (kidPos.y + 40) - kitePos.y;
+      const stringAngle = Math.atan2(dy, dx) * 180 / Math.PI;
+      
+      // 计算拉力大小（根据绳子长度和风力）
+      const tensionScale = baseScale * 0.8 * (1 + (stringLengthFactor - 1) * 0.3) * (1 + windPower/100);
+      
+      // 拉力向量 - 长度随绳子长度和风力变化
+      tensionVector.style.left = `${kitePos.x}px`;
+      tensionVector.style.top = `${kitePos.y}px`;
+      tensionVector.style.width = `${tensionScale}px`;
+      tensionVector.style.transform = `rotate(${stringAngle}deg)`;
+      tensionVector.style.opacity = '1';
+      
+      // 拉力标签
+      const tensionLabelDist = tensionScale * 0.4;
+      tensionLabel.style.left = `${kitePos.x + tensionLabelDist * Math.cos(stringAngle * Math.PI / 180)}px`;
+      tensionLabel.style.top = `${kitePos.y + tensionLabelDist * Math.sin(stringAngle * Math.PI / 180)}px`;
+      tensionLabel.style.opacity = '1';
+      
+      // 根据绳子长度更新拉力标签文字
+      const tensionPercentage = Math.round((stringLengthFactor - 1) * 100);
+      tensionLabel.innerHTML = `拉力${tensionPercentage > 0 ? `(+${tensionPercentage}%)` : ''}`;
+    }
+    
+    // 更新说明文本
+    function updateExplanation() {
+      const explanation = document.querySelector('.explanation');
+      const paragraphs = explanation.querySelectorAll('p');
+      
+      // 缓存当前状态，避免不必要的DOM更新
+      const currentState = isGrounded ? 'grounded' : 
+                          (windPower < WIND_THRESHOLD ? 'low_wind' : 'flying');
+      
+      // 只有当状态变化时才更新DOM
+      if (explanation.dataset.state !== currentState) {
+        // 更新第三段文字，根据风力大小显示不同的说明
+        if (isGrounded) {
+          paragraphs[2].innerHTML = '3. 牵引力：风筝在地面上，需要足够的风力才能起飞';
+        } else if (windPower < WIND_THRESHOLD) {
+          paragraphs[2].innerHTML = '3. 牵引力：风力不足，绳子松弛，风筝会下落';
+        } else {
+          paragraphs[2].innerHTML = '3. 牵引力：风力足够大，小朋友拉住风筝线，保持风筝的平衡';
+        }
+        
+        // 存储当前状态
+        explanation.dataset.state = currentState;
+      }
+      
+      // 更新第四段文字，添加绳子长度对重力的影响说明
+      paragraphs[3].innerHTML = `调整风力大小和绳子长度，观察风筝的飞行情况！<br>绳子越长，风筝受到的重力越大。`;
+    }
+    
+    // 主循环
+    function gameLoop() {
+      updateKite();
+      moveClouds();
+      updateExplanation();
+      updateForceVectors();
+      requestAnimationFrame(gameLoop);
+    }
+    
+    // 窗口大小调整
+    window.addEventListener('resize', () => {
+      // 修改小朋友位置到右侧中间
+      kidPos = { x: window.innerWidth * 0.7, y: window.innerHeight * 0.85 - 100 };
+      kid.style.left = `${window.innerWidth * 0.7}px`;
+      kid.style.bottom = `15%`;
+    });
+    
+    // 初始化
+    function init() {
+      // 设置小朋友位置到右侧中间
+      kidPos = { x: window.innerWidth * 0.7, y: window.innerHeight * 0.85 - 100 };
+      kid.style.left = `${window.innerWidth * 0.7}px`;
+      
+      // 初始化风向箭头
+      updateWindArrows();
+      
+      // 设置初始风力为50（最大值的50%）
+      windPower = INITIAL_WIND_POWER;
+      windSlider.value = INITIAL_WIND_POWER;
+      
+      // 设置初始绳子长度为300（最大值）
+      stringLengthFactor = INITIAL_STRING_LENGTH / 100;
+      stringSlider.value = INITIAL_STRING_LENGTH;
+      
+      // 计算地面高度
+      const groundY = window.innerHeight * (1 - GROUND_HEIGHT);
+      
+      // 设置风筝初始位置在空中，距离小朋友较远
+      kitePos.x = kidPos.x - 400; // 在小朋友左侧400像素处
+      kitePos.y = groundY - 300;   // 在空中较高处
+      isGrounded = false;
+      
+      // 初始化速度为0
+      kiteVel = { x: 0, y: 0 };
+      
+      // 更新风筝位置
+      kite.style.left = `${kitePos.x - 60}px`;
+      kite.style.top = `${kitePos.y - 60}px`;
+      
+      // 设置风筝初始角度为45度
+      kite.querySelector('img').style.transform = `rotate(45deg)`;
+      
+      // 计算初始绳子长度
+      const dx = kitePos.x - kidPos.x;
+      const dy = (kitePos.y + 40) - (kidPos.y + 40);
+      initialStringLength = Math.sqrt(dx * dx + dy * dy);
+      
+      // 更新风筝线
+      updateString();
+      
+      // 更新说明文本
+      updateExplanation();
+      
+      // 启动主循环
+      gameLoop();
+    }
+    
+    // 添加力分析开关状态
+    let showForceAnalysis = false;
+    
+    // 添加力分析按钮点击事件
+    forceAnalysisBtn.addEventListener('click', () => {
+      showForceAnalysis = !showForceAnalysis;
+      forceAnalysisBtn.textContent = showForceAnalysis ? '隐藏受力分析' : '显示受力分析';
+    });
+    
+    // 启动
+    init();
+  </script>
+</body>
+</html> 

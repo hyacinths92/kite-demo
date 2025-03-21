@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="300" height="300" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景 -->
+  <rect width="300" height="300" fill="#f0f0f0"/>
+  
+  <!-- 风筝 -->
+  <path d="M150,100 L120,160 L180,160 Z" fill="#FF4500"/>
+  <path d="M150,160 L120,220 L180,220 Z" fill="#FFD700"/>
+  
+  <!-- 风筝线 -->
+  <line x1="150" y1="220" x2="150" y2="250" stroke="black" stroke-width="2"/>
+  
+  <!-- 力的箭头 -->
+  <!-- 重力 -->
+  <line x1="150" y1="140" x2="150" y2="180" stroke="red" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <text x="160" y="160" fill="red">G</text>
+  
+  <!-- 风力 -->
+  <line x1="180" y1="140" x2="120" y2="140" stroke="blue" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <text x="130" y="130" fill="blue">F</text>
+  
+  <!-- 升力 -->
+  <line x1="150" y1="120" x2="120" y2="150" stroke="green" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <text x="110" y="140" fill="green">L</text>
+  
+  <!-- 绳子张力 -->
+  <line x1="150" y1="220" x2="150" y2="250" stroke="orange" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <text x="160" y="240" fill="orange">T</text>
+  
+  <!-- 箭头定义 -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" 
+    refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="currentColor"/>
+    </marker>
+  </defs>
+</svg> 
