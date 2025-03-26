@@ -830,15 +830,15 @@
         const kiteAngle = KITE_BASE_ANGLE + (KITE_MAX_ANGLE - KITE_BASE_ANGLE) * windFactor;
         const liftAngle = -kiteAngle - 45; // 升力方向
         
-        // 升力向量（向左上）
+        // 升力向量（向左上）- 增加基础比例
         liftVector.style.left = `${kitePos.x}px`;
         liftVector.style.top = `${kitePos.y}px`;
-        liftVector.style.width = `${baseScale * windPower/50}px`;
+        liftVector.style.width = `${baseScale * 1.5 * windPower/50}px`;
         liftVector.style.transform = `rotate(${liftAngle}deg)`;
         liftVector.style.opacity = '1';
         
         // 升力标签
-        const labelDist = baseScale * windPower/50 * 0.7;
+        const labelDist = baseScale * 1.5 * windPower/50 * 0.7;
         liftLabel.style.left = `${kitePos.x - labelDist * Math.cos(liftAngle * Math.PI / 180)}px`;
         liftLabel.style.top = `${kitePos.y - labelDist * Math.sin(liftAngle * Math.PI / 180)}px`;
         liftLabel.style.opacity = '1';
@@ -852,25 +852,31 @@
       const dy = (kidPos.y + 40) - kitePos.y;
       const stringAngle = Math.atan2(dy, dx) * 180 / Math.PI;
       
-      // 计算拉力大小（根据绳子长度和风力）
-      const tensionScale = baseScale * 0.8 * (1 + (stringLengthFactor - 1) * 0.3) * (1 + windPower/100);
+      // 计算拉力大小（根据绳子长度和风力）- 增加基础比例到2
+      const tensionScale = baseScale * 2 * (1 + (stringLengthFactor - 1) * 0.3) * (windPower/100);
       
-      // 拉力向量 - 长度随绳子长度和风力变化
-      tensionVector.style.left = `${kitePos.x}px`;
-      tensionVector.style.top = `${kitePos.y}px`;
-      tensionVector.style.width = `${tensionScale}px`;
-      tensionVector.style.transform = `rotate(${stringAngle}deg)`;
-      tensionVector.style.opacity = '1';
-      
-      // 拉力标签
-      const tensionLabelDist = tensionScale * 0.4;
-      tensionLabel.style.left = `${kitePos.x + tensionLabelDist * Math.cos(stringAngle * Math.PI / 180)}px`;
-      tensionLabel.style.top = `${kitePos.y + tensionLabelDist * Math.sin(stringAngle * Math.PI / 180)}px`;
-      tensionLabel.style.opacity = '1';
-      
-      // 根据绳子长度更新拉力标签文字
-      const tensionPercentage = Math.round((stringLengthFactor - 1) * 100);
-      tensionLabel.innerHTML = `拉力${tensionPercentage > 0 ? `(+${tensionPercentage}%)` : ''}`;
+      // 拉力向量 - 只在有风力时显示
+      if (windPower > 0) {
+        tensionVector.style.left = `${kitePos.x}px`;
+        tensionVector.style.top = `${kitePos.y}px`;
+        tensionVector.style.width = `${tensionScale}px`;
+        tensionVector.style.transform = `rotate(${stringAngle}deg)`;
+        tensionVector.style.opacity = '1';
+        
+        // 拉力标签
+        const tensionLabelDist = tensionScale * 0.4;
+        tensionLabel.style.left = `${kitePos.x + tensionLabelDist * Math.cos(stringAngle * Math.PI / 180)}px`;
+        tensionLabel.style.top = `${kitePos.y + tensionLabelDist * Math.sin(stringAngle * Math.PI / 180)}px`;
+        tensionLabel.style.opacity = '1';
+        
+        // 根据绳子长度更新拉力标签文字
+        const tensionPercentage = Math.round((stringLengthFactor - 1) * 100);
+        tensionLabel.innerHTML = `拉力${tensionPercentage > 0 ? `(+${tensionPercentage}%)` : ''}`;
+      } else {
+        // 无风力时隐藏拉力向量和标签
+        tensionVector.style.opacity = '0';
+        tensionLabel.style.opacity = '0';
+      }
     }
     
     // 更新说明文本
